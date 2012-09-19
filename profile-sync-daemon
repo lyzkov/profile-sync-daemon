@@ -2,28 +2,23 @@
 # By graysky <graysky AT archlinux DOT us>
 # Inspired by some code originally  written by Colin Verot
 
-. /etc/psd.conf
-
 # nothing to do if there is no conf file
-if [[ ! -f /etc/psd.conf ]]; then
-	echo "Cannnot find /etc/psd.conf so bailing.  Reinstall package to use profile-sync-daemon."
+if [[ ! -f /etc/conf.d/psd ]]; then
+	echo "Cannnot find /etc/conf.d/psd so bailing.  Reinstall package to use profile-sync-daemon."
 	exit 0
 else
-	. /etc/psd.conf
+	. /etc/conf.d/psd
 fi
 
 # nothing to do if there are no users
 if [[ -z "$USERS" ]]; then
-	echo "Must define at least one user in /etc/psd.conf"
+	echo "Must define at least one user in /etc/conf.d/psd"
 	exit 0
 fi
 
 BROWSERS=${BROWSERS:-"chromium google-chrome midori mozilla opera opera-next qupzilla conkeror.mozdev.org"} # all supported browsers
 
 [[ -z "$VOLATILE" ]] && VOLATILE="/tmp"
-
-# make it overrideable from the commandline / config
-DAEMON_FILE=${DAEMON_FILE:-"/run/psd"}
 
 set_which() {
 	local user=$1
@@ -55,9 +50,6 @@ set_which() {
 }
 
 sync() {
-	# used to check if psd is active
-	touch "$DAEMON_FILE"
-
 	# sync profiles to tmpfs and back again
 	local browser user
 	for user in $USERS; do
@@ -111,9 +103,6 @@ check() {
 }
 
 unsync() {
-	# remove daemon state indicator file
-	rm -f "$DAEMON_FILE"
-
 	# restore virgin state of profiles on physical discs
 	local browser user
 	for user in $USERS; do
@@ -138,15 +127,15 @@ case "$1" in
 		debug
 		;;
 	sync)
-		[[ ! -f $DAEMON_FILE ]] && check
+		[[ ! -f $PIDFILE ]] && check
 		sync
 		;;
 	resync)
-		[[ -f $DAEMON_FILE ]] && sync
+		[[ -f $PIDFILE ]] && sync
 		;;
 	unsync)
 		# make sure the daemon is running
-		[[ -f $DAEMON_FILE ]] && sync && unsync
+		[[ -f $PIDFILE ]] && sync && unsync
 		;;
 	*) 
 		echo -en "\E[31musage: $0 {sync}"
