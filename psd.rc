@@ -12,8 +12,6 @@ start() {
 		return 1
 	fi
 
-	/usr/bin/profile-sync-daemon check
-
 	start-stop-daemon \
 		--start \
 		--pidfile "${PIDFILE}" \
