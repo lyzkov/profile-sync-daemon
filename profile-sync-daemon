@@ -64,6 +64,7 @@ sync() {
 				if [[ $(readlink "$DIR") != "$VOLATILE/$user-$browser" ]]; then
 					mv "$DIR" "$BACKUP"
 					ln -s "$VOLATILE/$user-$browser" "$DIR"
+					chown -h $user:$user "$DIR"
 				fi
 
 				# sync the tmpfs targets to the disc
