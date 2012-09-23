@@ -23,7 +23,7 @@ BROWSERS=${BROWSERS:-"chromium google-chrome midori mozilla opera opera-next qup
 set_which() {
 	local user=$1
 	local browser=$2
-	local homedir="$(su -c 'echo $HOME' $user)"
+	local homedir="$(getent passwd $SUDO_USER | grep $user | cut -d: -f6)"
 
 	# reset global variables
 	BACKUP=
@@ -58,7 +58,7 @@ sync() {
 
 			# make tmpfs container
 			if [[ -d $DIR ]]; then
-				[[ -r "$VOLATILE/$user-$browser" ]] || su -c "install -dm755 '$VOLATILE/$user-$browser'" $user
+				[[ -r "$VOLATILE/$user-$browser" ]] || install -dm755 --owner=$user --group=$user "$VOLATILE/$user-$browser"
 
 				# backup target and link to tmpfs container
 				if [[ $(readlink "$DIR") != "$VOLATILE/$user-$browser" ]]; then
@@ -68,10 +68,10 @@ sync() {
 
 				# sync the tmpfs targets to the disc
 				if [[ -e $DIR/.flagged ]]; then
-					su -c "rsync -a --delete --exclude .flagged '$DIR/' '$BACKUP/'" $user
+					rsync -aog --delete --exclude .flagged "$DIR/" "$BACKUP/"
 				else
-					su -c "rsync -a '$BACKUP/' '$DIR/'" $user
-					su -c "touch '$DIR/.flagged'" $user
+					rsync -aog "$BACKUP/" "$DIR/"
+					touch "$DIR/.flagged"
 				fi
 			fi
 		done
