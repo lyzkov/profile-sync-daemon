@@ -1,6 +1,6 @@
 #!/bin/bash
 # By graysky <graysky AT archlinux DOT us>
-# Inspired by some code originally  written by Colin Verot
+# Inspired by some code originally written by Colin Verot
 
 # nothing to do if there is no conf file
 if [[ ! -f /etc/conf.d/psd ]]; then
@@ -23,7 +23,8 @@ BROWSERS=${BROWSERS:-"chromium google-chrome midori mozilla opera opera-next qup
 set_which() {
 	local user=$1
 	local browser=$2
-	local homedir="$(getent passwd $SUDO_USER | grep $user | cut -d: -f6)"
+	homedir="$(getent passwd $SUDO_USER | grep $user | cut -d: -f6)"
+	group="$(stat -c %G $homedir)"
 
 	# reset global variables
 	BACKUP=
@@ -58,13 +59,13 @@ sync() {
 
 			# make tmpfs container
 			if [[ -d $DIR ]]; then
-				[[ -r "$VOLATILE/$user-$browser" ]] || install -dm755 --owner=$user --group=$user "$VOLATILE/$user-$browser"
+				[[ -r "$VOLATILE/$user-$browser" ]] || install -dm755 --owner=$user --group=$group "$VOLATILE/$user-$browser"
 
 				# backup target and link to tmpfs container
 				if [[ $(readlink "$DIR") != "$VOLATILE/$user-$browser" ]]; then
 					mv "$DIR" "$BACKUP"
 					ln -s "$VOLATILE/$user-$browser" "$DIR"
-					chown -h $user:$user "$DIR"
+					chown -h $user:$group "$DIR"
 				fi
 
 				# sync the tmpfs targets to the disc
@@ -85,7 +86,7 @@ debug() {
 	for user in $USERS; do
 		for browser in $BROWSERS; do
 			set_which "$user" "$browser"
-			echo $user:$homedir:$browser
+			echo $user:$group:$browser:$homedir
 		done
 	done
 }
@@ -139,10 +140,13 @@ case "$1" in
 		[[ -f $PIDFILE ]] && sync && unsync
 		;;
 	*) 
-		echo -en "\E[31musage: $0 {sync}"
+		echo -en "\E[31musage: "
 		tput sgr0 # reset colors to normal
+		echo "$0 {sync|unsync|debug}"
 		echo
-		echo "sync) force a manual sync"
+		echo "sync) force a manual sync."
+		echo "unsync) force a manual unsync."
+		echo "debug) parge config file to make sure vars are correctly defined."
 		;;
 esac
 exit 0
