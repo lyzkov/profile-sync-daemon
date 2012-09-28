@@ -70,9 +70,9 @@ sync() {
 
 				# sync the tmpfs targets to the disc
 				if [[ -e $DIR/.flagged ]]; then
-					rsync -aog --delete --exclude .flagged "$DIR/" "$BACKUP/"
+					rsync -a --delete --exclude .flagged "$DIR/" "$BACKUP/"
 				else
-					rsync -aog "$BACKUP/" "$DIR/"
+					rsync -a "$BACKUP/" "$DIR/"
 					touch "$DIR/.flagged"
 				fi
 			fi
